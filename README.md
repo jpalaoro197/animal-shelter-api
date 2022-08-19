@@ -85,9 +85,21 @@ The endpoints for this app can be reached through a web browser or an API platfo
 
 After launching the app, as described below, navigate to http://localhost:5000/api/Animals/ in your browser or send the URL as a GET request in Postman to receive a list of all animals currently in the shelter.
 
-You can refine your search by adding queries. For instance,
+
 </details>
 <br>
+### ENDPOINTS
+
+Base URL: `https://localhost:5000/Animals`
+
+#### HTTP REQUEST STRUCTURE
+
+```Shell
+GET /api/Animals
+POST /api/Animals
+GET /api/Animals/{id}
+PUT /api/Animals/{id}
+DELETE /api/Animals/{id}
 
 This program was built using *`Microsoft .NET SDK 5.0.401`*, and may not be compatible with other versions. Your milage may vary.
 
