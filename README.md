@@ -88,11 +88,11 @@ After launching the app, as described below, navigate to http://localhost:5000/a
 
 </details>
 <br>
-### ENDPOINTS
+### Endpoints
 
 Base URL: `https://localhost:5000/Animals`
 
-#### HTTP REQUEST STRUCTURE
+#### HTTP Request Structure
 
 ```Shell
 GET /api/Animals
@@ -100,6 +100,26 @@ POST /api/Animals
 GET /api/Animals/{id}
 PUT /api/Animals/{id}
 DELETE /api/Animals/{id}
+```
+
+#### Example Query
+
+```Shell
+https://localhost:5000/api/Animals/2
+```
+
+#### Example JSON Response
+
+```JSON
+{
+  "animalId": 2,
+  "name": "Bob",
+  "species": "Panda",
+  "age": 8,
+  "gender": "Unknown"
+}
+```
+
 
 This program was built using *`Microsoft .NET SDK 5.0.401`*, and may not be compatible with other versions. Your milage may vary.
 
