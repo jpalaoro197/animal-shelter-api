@@ -88,6 +88,51 @@ After launching the app, as described below, navigate to http://localhost:5000/a
 
 </details>
 <br>
+### Note on Pagination
+The UrbanZoo_API version 2 returns a default of 5 results per page.
+
+To modify this, use the query parameters `pageNumber` and `pageSize` to alter the response results displayed. The `pageNumber` parameter will specify which page will be displayed, and the `pageSize` parameter will specify how many result in the response and the maximum is 5.
+
+#### Example Query
+```
+https://localhost:5000/api/features/?version=2&pageNumber=2&pageSize=1
+```
+
+#### Sample JSON Response
+```json
+{
+    "pageNumber": 2,
+    "pageSize": 1,
+    "firstPage": "https://localhost:5001/api/Features/?pageNumber=1&pageSize=1",
+    "lastPage": "https://localhost:5001/api/Features/?pageNumber=10&pageSize=1",
+    "totalPages": 10,
+    "totalRecords": 10,
+    "nextPage": "https://localhost:5001/api/Features/?pageNumber=3&pageSize=1",
+    "previousPage": "https://localhost:5001/api/Features/?pageNumber=1&pageSize=1",
+    "data": [
+        {
+        "featureId": 3,
+        "userId": 0,
+        "title": "Chicken ",
+        "description": "Can't feed the chickens",
+        "createdDate": "0001-01-01T00:00:00",
+        "availability": true,
+        "streetAddress": "SE 45th Ave & SE Harold St",
+        "state": "OR",
+        "city": "Portland",
+        "lat": 45.4827529,
+        "lng": 122.6164548,
+        "zipcode": "97266"
+        }
+    ],
+    "succeeded": true,
+    "errors": null,
+    "message": null
+}
+```
+
+To use default, _don't include_ `version`, `pageNumber` and `pageSize`.
+
 ### Endpoints
 
 Base URL: `https://localhost:5000/Animals`
