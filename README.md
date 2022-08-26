@@ -95,7 +95,7 @@ To modify this, use the query parameters `pageNumber` and `pageSize` to alter th
 
 #### Example Query
 ```
-https://localhost:5000/api/features/?version=2&pageNumber=2&pageSize=1
+https://localhost:5001/api/animals/?version=2&pageNumber=2&pageSize=1
 ```
 
 #### Sample JSON Response
