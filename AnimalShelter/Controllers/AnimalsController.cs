@@ -6,118 +6,147 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using AnimalShelter.Models;
+using AnimalShelter.Filter;
+using AnimalShelter.Wrappers;
+using AnimalShelter.Services;
+using AnimalShelter.Helpers;
 
 namespace AnimalShelter.Controllers
 {
-  [Route("api/[controller]")]
-  [ApiController]
-  public class AnimalsController : ControllerBase
-  {
-    private readonly AnimalShelterContext _db;
-
-    public AnimalsController(AnimalShelterContext db)
+    [Route("api/[controller]")]
+    [ApiVersion("1.0")]
+    [ApiVersion("2.0")]
+    [ApiController]
+    public class AnimalsController : ControllerBase
     {
-      _db = db;
-    }
+        private readonly AnimalShelterContext _db;
+        private readonly IUriService uriService;
 
-    // GET: api/Animals
-    [HttpGet]
-    public async Task<ActionResult<IEnumerable<Animal>>> Get(string species, string gender, string name)
-    {
-      var query = _db.Animals.AsQueryable();
-
-      if (species != null)
-      {
-        query = query.Where(entry => entry.Species == species);
-      }
-
-      if (gender != null)
-      {
-        query = query.Where(entry => entry.Gender == gender);
-      }    
-
-      if (name != null)
-      {
-        query = query.Where(entry => entry.Name == name);
-      }      
-
-      return await query.ToListAsync();
-    }
-
-    // GET: api/Animals/5
-    [HttpGet("{id}")]
-    public async Task<ActionResult<Animal>> GetAnimal(int id)
-    {
-        var animal = await _db.Animals.FindAsync(id);
-
-        if (animal == null)
+        public AnimalsController(AnimalShelterContext context, IUriService uriService)
         {
-            return NotFound();
+            this._db = context;
+            this.uriService = uriService;
         }
 
-        return animal;
-    }
-
-    // PUT: api/Animals/5
-    // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-    [HttpPut("{id}")]
-    public async Task<IActionResult> Put(int id, Animal animal)
-    {
-      if (id != animal.AnimalId)
-      {
-        return BadRequest();
-      }
-
-      _db.Entry(animal).State = EntityState.Modified;
-
-      try
-      {
-        await _db.SaveChangesAsync();
-      }
-      catch (DbUpdateConcurrencyException)
-      {
-        if (!AnimalExists(id))
+        //GET: api/Animals
+        [MapToApiVersion("1.0")]
+        [HttpGet]
+        public async Task<ActionResult<IEnumerable<Animal>>> GetAnimals()
         {
-          return NotFound();
+            return await _db.Animals.ToListAsync();
         }
-        else
+
+        // Method to get paginated animals; we couldn't figure out how to connect this with the client side, but left it in for documentation of our work
+        [MapToApiVersion("2.0")]
+        [HttpGet] 
+        public async Task<ActionResult<IEnumerable<Animal>>> GetAnimals([FromQuery] PaginationFilter filter)
         {
-          throw;
+            var route = Request.Path.Value;
+            var validFilter = new PaginationFilter(filter.PageNumber, filter.PageSize);
+            var pagedData = await _db.Animals
+               .Skip((validFilter.PageNumber - 1) * validFilter.PageSize)
+               .Take(validFilter.PageSize)
+               .ToListAsync();
+            var totalRecords = await _db.Animals.CountAsync();
+            // var response = await _db.Animals.ToListAsync();
+            var pagedResponse = PaginationHelper.CreatePagedReponse<Animal>(pagedData, validFilter, totalRecords, uriService, route);
+            return Ok(pagedResponse);
         }
-      }
 
-      return NoContent();
+        // GET: api/Animals/5
+        [MapToApiVersion("1.0")]
+        [HttpGet("{id}")]
+        public async Task<ActionResult<Animal>> GetAnimal(int id)
+        {
+            var animal = await _db.Animals.FindAsync(id);
+
+            if (animal == null)
+            {
+                return NotFound();
+            }
+
+            return animal;
+        }
+
+        // Method edited to work with get paginated animals; we couldn't figure out how to connect this with the client side, but left it in for documentation of our work
+        [MapToApiVersion("2.0")]
+        [HttpGet("{id}")]
+        public async Task<ActionResult<Animal>> GetAnimalV2(int id)
+        {
+            var animal = await _db.Animals.FindAsync(id);
+
+            if (animal == null)
+            {
+                return NotFound();
+            }
+
+            return Ok(new Response<Animal>(animal));
+        }
+
+        // PUT: api/Animals/5
+        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
+        [HttpPut("{id}")]
+        public async Task<IActionResult> PutAnimal(int id, Animal animal)
+        {
+            if (id != animal.AnimalId)
+            {
+                return BadRequest();
+            }
+
+            _db.Entry(animal).State = EntityState.Modified;
+
+            try
+            {
+                await _db.SaveChangesAsync();
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                if (!AnimalExists(id))
+                {
+                    return NotFound();
+                }
+                else
+                {
+                    throw;
+                }
+            }
+
+            // return NoContent();
+            return CreatedAtAction(nameof(GetAnimal), new { id = animal.AnimalId }, animal);
+        }
+
+
+        // POST: api/Animals
+        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
+        [HttpPost]
+        public async Task<ActionResult<Animal>> PostAnimal([FromBody] Animal animal)
+        {
+            _db.Animals.Add(animal);
+            await _db.SaveChangesAsync();
+
+            return CreatedAtAction("GetAnimal", new { id = animal.AnimalId }, animal);
+        }
+
+
+        // DELETE: api/Animals/5
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeleteAnimal(int id)
+        {
+            var animal = await _db.Animals.FindAsync(id);
+            if (animal == null)
+            {
+                return NotFound();
+            }
+
+            _db.Animals.Remove(animal);
+            await _db.SaveChangesAsync();
+
+            return NoContent();
+        }
+
+        private bool AnimalExists(int id)
+        {
+            return _db.Animals.Any(e => e.AnimalId == id);
+        }
     }
-
-    // POST: api/Animals
-    [HttpPost]
-    public async Task<ActionResult<Animal>> Post(Animal animal)
-    {
-      _db.Animals.Add(animal);
-      await _db.SaveChangesAsync();
-
-      return CreatedAtAction(nameof(GetAnimal), new { id = animal.AnimalId }, animal);
-    }
-
-    // DELETE: api/Animals/5
-    [HttpDelete("{id}")]
-    public async Task<IActionResult> DeleteAnimal(int id)
-    {
-      var animal = await _db.Animals.FindAsync(id);
-      if (animal == null)
-      {
-        return NotFound();
-      }
-
-      _db.Animals.Remove(animal);
-      await _db.SaveChangesAsync();
-
-      return NoContent();
-    }
-
-    private bool AnimalExists(int id)
-    {
-      return _db.Animals.Any(e => e.AnimalId == id);
-    }
-  }
 }
